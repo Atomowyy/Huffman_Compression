@@ -55,8 +55,6 @@ def huffman(file, file_informations: list) -> None:
 
     bin_str += chars_left_bin
 
-    print(bin_str)
-
     for line in file:
         for char in line:
             coded_char: str = dictionary[char]
@@ -64,7 +62,7 @@ def huffman(file, file_informations: list) -> None:
                 compressed_file.write(int(bin_str, 2).to_bytes(1, 'big'))
                 bin_str = ''
                 bin_str += coded_char
-            elif len(bin_str)>8:
+            elif len(bin_str) > 8:
                 znak = int(bin_str[:8], 2)
                 compressed_file.write(znak.to_bytes(1, 'big'))
                 rest: str = bin_str[8:]
@@ -80,10 +78,28 @@ def huffman(file, file_informations: list) -> None:
     compressed_file.close()
 
 
-file_to_compress = open('do_kompresji.txt', 'rb')
-file_informations_list: list = update_file_informations(file_to_compress)
-file_to_compress.close()
+def dec_file_info(file) -> list:
+    dict_lenght: int = 0
+    dictionary: list = []
+    for line in file:
+        for i in line:
+            if dict_lenght != 0 and len(dictionary) < dict_lenght:
+                dictionary.append(i)
+            if dict_lenght == 0:
+                dict_lenght = i
 
-file_to_compress = open('do_kompresji.txt', 'rb')
-huffman(file_to_compress, file_informations_list)
-file_to_compress.close()
+    print(dictionary)
+    print(dict_lenght)
+
+# file_to_compress = open('do_kompresji.txt', 'rb')
+# file_informations_list: list = update_file_informations(file_to_compress)
+# file_to_compress.close()
+
+# file_to_compress = open('do_kompresji.txt', 'rb')
+# huffman(file_to_compress, file_informations_list)
+# file_to_compress.close()
+
+
+file_to_decompress = open('skompresowane.txt', 'rb')
+
+dec_file_info(file_to_decompress)
