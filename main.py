@@ -78,18 +78,58 @@ def huffman(file, file_informations: list) -> None:
     compressed_file.close()
 
 
+def decompress_dict(chars_list: list) -> dict:
+    n: int = math.ceil(math.log(len(chars_list), 2))
+    dictionary: dict = {}
+
+    for i in chars_list:
+        char = chr(i)
+        bin_char_id: str = bin(len(dictionary))[2:]
+
+        while len(bin_char_id) < n:
+            bin_char_id = '0' + bin_char_id
+        dictionary.update({bin_char_id: char})
+
+    return dictionary
+
+
 def dec_file_info(file) -> list:
+    dictionary: dict = {}
     dict_lenght: int = 0
-    dictionary: list = []
+    end_bytes: list = []
+    chars_list: list = []
+    bin_char: str = ''
     for line in file:
         for i in line:
-            if dict_lenght != 0 and len(dictionary) < dict_lenght:
-                dictionary.append(i)
+            if len(bin_char) != 0:
+                print(bin_char)
+                if len(end_bytes) == 0:
+                    print(int(bin_char[:3], 2))
+                    end_bytes.append(int(bin_char[:3], 2))
+                    bin_char = bin_char[3:]
+
+
+
+
+            # słownik
+            if dict_lenght != 0 and len(chars_list) < dict_lenght:
+                chars_list.append(i)
+                if len(chars_list) == dict_lenght:
+                    dictionary = decompress_dict(chars_list)
+                    continue
+            # pierwszy znak kodu - ilość znaków w słowniku
             if dict_lenght == 0:
                 dict_lenght = i
 
+            if len(dictionary) == dict_lenght:
+                bin_char: str = str(bin(i))[2:]
+                while len(bin_char) < 8:
+                    bin_char = '0' + bin_char
+
+
+    print(end_bytes)
     print(dictionary)
-    print(dict_lenght)
+
 
 # file_to_compress = open('do_kompresji.txt', 'rb')
 # file_informations_list: list = update_file_informations(file_to_compress)
