@@ -55,7 +55,23 @@ def huffman(file, file_informations: list) -> None:
 
     for line in file:
         for char in line:
+            #print('--------------')
             coded_char: str = dictionary[char]
+            if len(bin_str) >=8:
+                #print(f'bin_str {bin_str}')
+                chr1 = bin_str[:8]
+                reszta = bin_str[8:]
+                #print(f'Pierwsze 8 znaków{chr1}')
+                #print(f'xor: {xor}')
+                #print(f'pozostałe znaki: {reszta}')
+
+                xored = xor_cipher(chr1, xor)
+                #print(f"Xored: {xored}")
+                bin_str = xored + reszta
+                #print(f'Nowy string : {bin_str}')
+
+
+
             if len(bin_str) == 8:
                 compressed_file.write(int(bin_str, 2).to_bytes(1, 'big'))
                 bin_str = ''
@@ -136,18 +152,34 @@ def dec_file(file) -> None:
     file_decompress.close()
 
 
+def xor_cipher(str1, str2):
+    xored = ''
+    for i in range(0, 8):
+        xored += str(int(str1[i])^int(str2[i]))
+    #print(xored)
+    return xored
+
+
+klucz: str = input("Podaj klucz do szyfrowania/deszyfrowania")
+xor_litera = klucz[:1]
+przesuniecie = klucz[1:]
+
+xor = str(bin(ord(xor_litera)))[2:]
+while len(xor) < 8:
+    xor = '0'+xor
+print(xor)
 
 #kompresja
-file_to_compress = open('do_kompresji.txt', 'rb')
-file_informations_list: list = update_file_informations(file_to_compress)
-file_to_compress.close()
-file_to_compress = open('do_kompresji.txt', 'rb')
-huffman(file_to_compress, file_informations_list)
-file_to_compress.close()
+#file_to_compress = open('do_kompresji.txt', 'rb')
+#file_informations_list: list = update_file_informations(file_to_compress)
+#file_to_compress.close()
+#file_to_compress = open('do_kompresji.txt', 'rb')
+#huffman(file_to_compress, file_informations_list)
+#file_to_compress.close()
 
 
-"""
+""""""
 #dekompresja
 file_to_decompress = open('skompresowany.txt', 'rb')
 dec_file(file_to_decompress)
-"""
+""""""
