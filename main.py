@@ -36,7 +36,7 @@ def create_dictionary(uniq_chars: set, n: int) -> dict:
     return coded_chars
 
 
-def huffman(file, file_informations: list) -> None:
+def huffman(file, file_informations: list, przesuniecie) -> None:
     compressed_file = open('skompresowany.txt', 'wb')
     dictionary: dict = file_informations[0]
     chars_left: int = file_informations[1]
@@ -70,14 +70,13 @@ def huffman(file, file_informations: list) -> None:
                 bin_str = xored + reszta
                 #print(f'Nowy string : {bin_str}')
 
-
-
-            if len(bin_str) == 8:
-                compressed_file.write(int(bin_str, 2).to_bytes(1, 'big'))
-                bin_str = ''
-                bin_str += coded_char
-            elif len(bin_str) > 8:
                 znak = int(bin_str[:8], 2)
+
+                znak = znak+przesuniecie
+                while znak>255:
+                    znak = znak-256
+
+
                 compressed_file.write(znak.to_bytes(1, 'big'))
                 rest: str = bin_str[8:]
                 bin_str = '' + rest + coded_char
@@ -90,9 +89,14 @@ def huffman(file, file_informations: list) -> None:
     bin_str = xor_cipher(bin_str, xor)
     print(bin_str)
 
-    compressed_file.write(int(bin_str, 2).to_bytes(1, 'big'))
+    znak = int(bin_str,2)
+    print(znak)
+    znak = znak+przesuniecie
+    while znak > 255:
+        znak = znak - 256
+    print(znak)
+    compressed_file.write(znak.to_bytes(1, 'big'))
     compressed_file.close()
-
 
 def decompress_dict(chars_list: list) -> dict:
     print(chars_list)
@@ -115,69 +119,98 @@ def dec_file(file) -> None:
     dict_lenght: int = 0
     end_bytes: list = []
     chars_list: list = []
-    bin_char: str = ''
+    reszta = ''
+    xored = ''
+    xored2 = ''
 
     file_decompress = open('zdekompresowany.txt', 'w')
     for line in file:
         for i in line:
-            if len(bin_char) != 0:
-                if len(end_bytes) == 0:
-                    end_bytes.append(int(bin_char[:3], 2))
-                    bin_char = bin_char[3:]
 
-                while len(bin_char) >= n:
-                    decoded_char: str = bin_char[:n]
+            if len(xored) != 0:
+                if len(end_bytes) == 0:
+                    end_bytes.append(int(xored[:3], 2))
+                    xored = xored[3:]
+
+                ile_razy = len(xored)//n
+                #print(f'xored: {xored}')
+                for j in range(ile_razy):
+                    decoded_char: str = xored[:n]
                     file_decompress.write(dictionary[decoded_char])
-                    bin_char = bin_char[n:]
+                    xored = xored[n:]
+                xored2 = xored
+                #print(f'reszta {xored2}')
+
+
+
+
 
             if dict_lenght == 0:
                 dict_lenght = i
                 continue
+            if len(chars_list)<dict_lenght and dict_lenght!=0:
+                chars_list.append(i)
             if len(dictionary) == 0 and len(chars_list)==dict_lenght:
                 n: int = math.ceil(math.log(len(chars_list), 2))
                 dictionary = decompress_dict(chars_list)
-            if len(chars_list)<dict_lenght and dict_lenght!=0:
-                chars_list.append(i)
+                continue
+
 
             if len(dictionary)!=0:
-                odczytany_znak = str(bin(i)[2:])
+                odczytany_znak =str(bin(i)[2:])
+                #print(f'Odczytany: {odczytany_znak}')
                 while len(odczytany_znak)<8:
                     odczytany_znak = '0'+odczytany_znak
-                xored = xor_cipher(odczytany_znak, xor)
-                bin_char = bin_char + xored
 
-    while len(bin_char) > end_bytes[0]:
-        decoded_char = bin_char[:n]
+
+                #print(odczytany_znak)
+                kopia = int(odczytany_znak, 2)
+                kopia2 = kopia-przesuniecie
+                while kopia2<0:
+                    kopia2 += 256
+                #print(kopia2)
+
+                kopia3 = str(bin(kopia2)[2:])
+                while len(kopia3)<8:
+                    kopia3 = '0' + kopia3
+                deszyfr = xor_cipher(str(kopia3), xor)
+                #print(f'zdeszyfrowany str: {deszyfr}')
+                xored = xored2 + xor_cipher(str(kopia3), xor)
+                #print(xored)
+
+    while len(xored) > end_bytes[0]:
+        decoded_char = xored[:n]
         file_decompress.write(dictionary[decoded_char])
-        bin_char = bin_char[n:]
+        xored = xored[n:]
+
 
     file_decompress.close()
 
 
 def xor_cipher(str1, str2):
     xored = ''
-    for i in range(0, 8):
+    for i in range(0, len(str2)):
         xored += str(int(str1[i])^int(str2[i]))
     #print(xored)
     return xored
 
 
-#klucz: str = input("Podaj klucz do szyfrowania/deszyfrowania")
-klucz = 'a12'
+klucz: str = input("Podaj klucz do szyfrowania/deszyfrowania")
+
 xor_litera = klucz[:1]
-przesuniecie = klucz[1:]
+przesuniecie = int(klucz[1:])
 
 xor = str(bin(ord(xor_litera)))[2:]
 while len(xor) < 8:
     xor = '0'+xor
 #kompresja
 
-#file_to_compress = open('do_kompresji.txt', 'rb')
-#file_informations_list: list = update_file_informations(file_to_compress)
-#file_to_compress.close()
-#file_to_compress = open('do_kompresji.txt', 'rb')
-#huffman(file_to_compress, file_informations_list)
-#file_to_compress.close()
+file_to_compress = open('do_kompresji.txt', 'rb')
+file_informations_list: list = update_file_informations(file_to_compress)
+file_to_compress.close()
+file_to_compress = open('do_kompresji.txt', 'rb')
+huffman(file_to_compress, file_informations_list, przesuniecie)
+file_to_compress.close()
 
 
 #dekompresja
